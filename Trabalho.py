@@ -76,6 +76,12 @@ df = pd.concat(
     ],
     ignore_index=True
 )
+df.to_csv(
+    "Dados/dados_setores.csv",
+    index=False
+)
+print("Dados salvos com sucesso!")
+
 print(df.head())
 print(df.shape)
 print(df.groupby("setor")["empresas"].describe())
@@ -106,6 +112,11 @@ plt.xlabel("Ano")
 plt.ylabel("Número de Empresas")
 plt.legend()
 plt.grid(True)
+plt.savefig(
+    "Gráficos/grafico_setores.png",
+    dpi=300,
+    bbox_inches="tight"
+)
 plt.show()
 
 #===========================================================
@@ -151,6 +162,11 @@ plt.xlabel("Ano")
 plt.ylabel("Índice (2006 = 100)")
 plt.legend()
 plt.grid(True)
+plt.savefig(
+    "Gráficos/grafico_base100.png",
+    dpi=300,
+    bbox_inches="tight"
+)
 plt.show()   
 
 
