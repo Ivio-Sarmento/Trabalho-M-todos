@@ -3,7 +3,7 @@
 #
 # Pergunta de pesquisa:
 # A criação do Microempreendedor Individual (MEI), em 2009,
-# esteve associada à dimminuição nos impostos e ao consequente aumento do número de empresas
+# esteve associada ao aumento do número de empresas
 # formalizadas no Brasil?
 #
 # Fonte dos dados:
@@ -23,7 +23,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ==========================================================
-# Função para baixar dados da SIDRA
+#  Baixar dados do setor pela API SIDRA
 # ==========================================================
 def baixar_setor(nome_setor, codigo_cnae):
 
@@ -87,7 +87,7 @@ print(df.shape)
 print(df.groupby("setor")["empresas"].describe())
 
 # ==========================================================
-#Gráficos
+#Gráfico em Valor Absoluto 
 # ==========================================================
 plt.figure(figsize=(12,6))
 for setor in df["setor"].unique():
@@ -120,7 +120,7 @@ plt.savefig(
 plt.show()
 
 #===========================================================
-#Base 100
+#Criação do índice base 100
 #===========================================================
 df_indice = df.copy()
 for setor in df_indice["setor"].unique():
@@ -140,7 +140,9 @@ for setor in df_indice["setor"].unique():
         ] / base
     ) * 100
 
-#Gráfico base 100
+# ==========================================================
+#Gráfico em Base 100
+# ==========================================================
 plt.figure(figsize=(12,6))
 for setor in df_indice["setor"].unique():
     dados = df_indice[df_indice["setor"] == setor]
