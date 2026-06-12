@@ -17,10 +17,20 @@
 # ==========================================================
 # Bibliotecas
 # ==========================================================
+def formato_brasileiro(valor, casas=0):
+    """
+    Formata números no padrão brasileiro:
+    ponto para milhar e vírgula para decimal.
+    """
+    return f"{valor:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
+import os
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+
+os.makedirs("Dados", exist_ok=True)
+os.makedirs("Gráficos", exist_ok=True)
 
 # ==========================================================
 #  Baixar dados do setor pela API SIDRA
@@ -40,16 +50,20 @@ def baixar_setor(nome_setor, codigo_cnae):
 
     resposta = requests.get(url)
     dados = resposta.json()
+    
     df = pd.DataFrame(dados[1:])
     df = df[["D3N", "V"]]
     df.columns = ["ano", "empresas"]
+    
     df["ano"] = pd.to_numeric(df["ano"])
     df["empresas"] = pd.to_numeric(
         df["empresas"],
         errors="coerce"
     )
+    
     df = df.dropna(subset=["empresas"])
     df["setor"] = nome_setor
+    
     return df
 
 veiculos = baixar_setor(
@@ -80,11 +94,100 @@ df.to_csv(
     "Dados/dados_setores.csv",
     index=False
 )
-print("Dados salvos com sucesso!")
 
-print(df.head())
-print(df.shape)
-print(df.groupby("setor")["empresas"].describe())
+
+
+resumo_setores = (
+    df.groupby("setor")["empresas"]
+    .agg(
+        Média="mean",
+        Mínimo="min",
+        Máximo="max"
+    )
+    .round(0)
+    .reset_index()
+    .rename(columns={"setor": "Setor"})
+)
+
+resumo_setores.style\
+    .hide(axis="index")\
+    .format({
+        "Média": lambda x: formato_brasileiro(x, 0),
+        "Mínimo": lambda x: formato_brasileiro(x, 0),
+        "Máximo": lambda x: formato_brasileiro(x, 0)
+    })\
+    .set_properties(**{
+        "text-align": "center"
+    })\
+    .set_table_styles([
+        {
+            "selector": "th",
+            "props": [
+                ("text-align", "center"),
+                ("border-bottom", "2px solid black")
+            ]
+        },
+        {
+            "selector": "td",
+            "props": [
+                ("border-bottom", "1px solid #ddd")
+            ]
+        }
+    ])
+
+print("A base final possui 48 observações e 3 variáveis. Cada linha representa um setor em determinado ano, com a respectiva quantidade de empresas registradas no CEMPRE.\n\nA tabela acima apresenta estatísticas descritivas básicas dos setores analisados, incluindo número de observações, média, valor mínimo e valor máximo do número de empresas registradas ao longo da série histórica.")
+
+# ==========================================================
+# Tabela-resumo de crescimento por setor
+# ==========================================================
+
+df_pivot = df.pivot(
+    index="ano",
+    columns="setor",
+    values="empresas"
+)
+
+tabela_crescimento = pd.DataFrame({
+    "Setor": df_pivot.columns,
+    "Cresc. 2006–2009 (%)": (
+        (df_pivot.loc[2009] / df_pivot.loc[2006] - 1) * 100
+    ).values,
+    "Cresc. 2009–2021 (%)": (
+        (df_pivot.loc[2021] / df_pivot.loc[2009] - 1) * 100
+    ).values,
+    "Cresc. 2006–2021 (%)": (
+        (df_pivot.loc[2021] / df_pivot.loc[2006] - 1) * 100
+    ).values
+})
+
+tabela_crescimento = tabela_crescimento.round(2)
+
+tabela_crescimento.style\
+    .hide(axis="index")\
+    .format({
+    "Cresc. 2006–2009 (%)": lambda x: formato_brasileiro(x, 2),
+    "Cresc. 2009–2021 (%)": lambda x: formato_brasileiro(x, 2),
+    "Cresc. 2006–2021 (%)": lambda x: formato_brasileiro(x, 2)
+    })\
+    .set_properties(**{
+        "text-align": "center"
+    })\
+    .set_table_styles([
+        {
+            "selector": "th",
+            "props": [
+                ("text-align", "center"),
+                ("border-bottom", "2px solid black")
+            ]
+        },
+        {
+            "selector": "td",
+            "props": [
+                ("border-bottom", "1px solid #ddd")
+            ]
+        }
+    ])
+
 
 # ==========================================================
 #Gráfico em Valor Absoluto 
@@ -139,6 +242,8 @@ for setor in df_indice["setor"].unique():
             "empresas"
         ] / base
     ) * 100
+
+df_indice.head()
 
 # ==========================================================
 #Gráfico em Base 100
