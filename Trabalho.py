@@ -243,7 +243,6 @@ for setor in df_indice["setor"].unique():
         ] / base
     ) * 100
 
-df_indice.head()
 
 # ==========================================================
 #Gráfico em Base 100
